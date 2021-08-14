@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE hibernate-configuration PUBLIC
+        "-//Hibernate/Hibernate Configuration DTD 3.0//EN"
+        "http://www.hibernate.org/dtd/hibernate-configuration-3.0.dtd">
+<hibernate-configuration>
+
+    <session-factory>
+        <property name="hibernate.bytecode.use_reflection_optimizer">false</property>
+        <property name="hibernate.c3p0.idle_test_period">1800</property>
+        <property name="hibernate.c3p0.max_size">500</property>
+        <property name="hibernate.c3p0.max_statements">1000</property>
+        <property name="hibernate.c3p0.min_size">2</property>
+        <property name="hibernate.c3p0.timeout">3000</property> 
+        <property name="hibernate.cache.provider_class">org.hibernate.cache.NoCacheProvider</property>
+        <property name="hibernate.connection.CharSet">utf8</property>
+        <property name="hibernate.connection.characterEncoding">utf8</property>
+
+        <property name="hibernate.connection.autocommit">false</property>
+        <property name="hibernate.connection.driver_class">com.mysql.jdbc.Driver</property>
+
+        
+        <property name="hibernate.connection.url">jdbc:mysql://103.3.62.51:3306/mangagru</property>        
+        <property name="hibernate.connection.username">manga</property>
+        <property name="hibernate.connection.password">manga@6789</property>
+		
+        <!--<property name="hibernate.current_session_context_class">thread</property>-->
+        <property name="hibernate.search.autoregister_listeners">false</property>
+        <property name="hibernate.enable_lazy_load_no_trans">true</property>
+        <property name="hibernate.dialect">org.hibernate.dialect.MySQLDialect</property>
+        <!-- Tạo bảng trên database từ file model -->
+        <!-- 		<property name="hbm2ddl.auto" >update</property> -->
+        <property name="hibernate.show_sql">false</property>
+        <property name="hibernate.format_sql">false</property>
+        <property name="hibernate.globally_quoted_identifiers">true</property>
+        <mapping class="com.mina.bo.Chapter" />
+        <mapping class="com.mina.bo.Files" />
+        <mapping class="com.mina.bo.Manga" />
+        <mapping class="com.mina.bo.Links" />
+        <mapping class="com.mina.bo.Sitemaps" />
+        
+        
+
+    </session-factory>
+
+</hibernate-configuration>

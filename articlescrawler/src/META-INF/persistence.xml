@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<persistence version="2.1" xmlns="http://xmlns.jcp.org/xml/ns/persistence" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/persistence http://xmlns.jcp.org/xml/ns/persistence/persistence_2_1.xsd">
+  <persistence-unit name="articlescrawlerPU" transaction-type="RESOURCE_LOCAL">
+    <provider>org.eclipse.persistence.jpa.PersistenceProvider</provider>
+    <class>com.mina.bo.Files</class>
+    <class>com.mina.bo.Links</class>
+    <class>com.mina.bo.Sitemaps</class>
+    <class>com.mina.bo.Manga</class>
+    <class>com.mina.bo.Chapter</class>
+    <class>com.mina.bo.Authors</class>
+    <class>com.mina.bo.Genres</class>
+    <class>com.mina.bo.MangaGenre</class>
+    <class>com.mina.bo.MangaAuthor</class>
+    <properties>
+      <property name="javax.persistence.jdbc.url" value="jdbc:mysql://95.217.216.221:3306/mangabear?zeroDateTimeBehavior=convertToNull"/>
+      <property name="javax.persistence.jdbc.user" value="manga"/>
+      <property name="javax.persistence.jdbc.driver" value="com.mysql.jdbc.Driver"/>
+      <property name="javax.persistence.jdbc.password" value="manga@6789"/>
+    </properties>
+  </persistence-unit>
+</persistence>
