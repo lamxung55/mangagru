@@ -17,11 +17,17 @@
 
         <property name="hibernate.connection.autocommit">false</property>
         <property name="hibernate.connection.driver_class">com.mysql.jdbc.Driver</property>
-
+        <property name="hibernate.cache.use_query_cache">false</property>
         
-        <property name="hibernate.connection.url">jdbc:mysql://103.3.62.51:3306/mangagru</property>        
+        <!--        <property name="hibernate.connection.url">jdbc:mysql://103.3.62.51:3306/mangagru</property>        
         <property name="hibernate.connection.username">manga</property>
-        <property name="hibernate.connection.password">manga@6789</property>
+        <property name="hibernate.connection.password">manga@6789</property>-->
+        
+        <property name="hibernate.connection.url">jdbc:mysql://173.225.108.250:3306/mangagru?useSSL=false</property>        
+        <property name="hibernate.connection.username">manga</property>
+        <property name="hibernate.connection.password">Manga@6789</property>
+        
+        
 		
         <!--<property name="hibernate.current_session_context_class">thread</property>-->
         <property name="hibernate.search.autoregister_listeners">false</property>

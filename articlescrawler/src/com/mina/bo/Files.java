@@ -25,19 +25,7 @@ import javax.xml.bind.annotation.XmlRootElement;
  * @author Mina Mimi
  */
 @Entity
-@Table(name = "files")
-@XmlRootElement
-@NamedQueries({
-    @NamedQuery(name = "Files.findAll", query = "SELECT f FROM Files f")
-    , @NamedQuery(name = "Files.findById", query = "SELECT f FROM Files f WHERE f.id = :id")
-    , @NamedQuery(name = "Files.findByChapterId", query = "SELECT f FROM Files f WHERE f.chapterId = :chapterId")
-    , @NamedQuery(name = "Files.findBySrcUrl", query = "SELECT f FROM Files f WHERE f.srcUrl = :srcUrl")
-    , @NamedQuery(name = "Files.findByLocalUrl", query = "SELECT f FROM Files f WHERE f.localUrl = :localUrl")
-    , @NamedQuery(name = "Files.findByWidth", query = "SELECT f FROM Files f WHERE f.width = :width")
-    , @NamedQuery(name = "Files.findByHeight", query = "SELECT f FROM Files f WHERE f.height = :height")
-    , @NamedQuery(name = "Files.findBySize", query = "SELECT f FROM Files f WHERE f.size = :size")
-    , @NamedQuery(name = "Files.findByCreatedAt", query = "SELECT f FROM Files f WHERE f.createdAt = :createdAt")
-    , @NamedQuery(name = "Files.findByUpdatedAt", query = "SELECT f FROM Files f WHERE f.updatedAt = :updatedAt")})
+@Table(name = "files_2")
 public class Files implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -48,6 +36,8 @@ public class Files implements Serializable {
     private Long id;
     @Column(name = "chapter_id")
     private long chapterId;
+    @Column(name = "manga_id")
+    private long manga_id;
     @Column(name = "src_url")
     private String srcUrl;
     @Column(name = "local_url")
@@ -57,13 +47,17 @@ public class Files implements Serializable {
     @Column(name = "height")
     private Integer height;
     @Column(name = "size")
-    private long size;
+    private Long size;
     @Column(name = "created_at")
     @Temporal(TemporalType.TIMESTAMP)
     private Date createdAt;
     @Column(name = "updated_at")
     @Temporal(TemporalType.TIMESTAMP)
     private Date updatedAt;
+    @Column(name = "status")
+    private Integer status;
+    @Column(name = "chapter_slug")
+    private String chapterSlug;
 
     public Files() {
     }
@@ -120,11 +114,11 @@ public class Files implements Serializable {
         this.height = height;
     }
 
-    public long getSize() {
+    public Long getSize() {
         return size;
     }
 
-    public void setSize(long size) {
+    public void setSize(Long size) {
         this.size = size;
     }
 
@@ -142,6 +136,30 @@ public class Files implements Serializable {
 
     public void setUpdatedAt(Date updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public Integer getStatus() {
+        return status;
+    }
+
+    public void setStatus(Integer status) {
+        this.status = status;
+    }
+
+    public long getManga_id() {
+        return manga_id;
+    }
+
+    public void setManga_id(long manga_id) {
+        this.manga_id = manga_id;
+    }
+
+    public String getChapterSlug() {
+        return chapterSlug;
+    }
+
+    public void setChapterSlug(String chapterSlug) {
+        this.chapterSlug = chapterSlug;
     }
 
     @Override
@@ -168,5 +186,5 @@ public class Files implements Serializable {
     public String toString() {
         return "com.mina.bo.Files[ id=" + id + " ]";
     }
-    
+
 }

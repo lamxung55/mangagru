@@ -13,6 +13,7 @@ import com.mina.bo.Files;
 import com.mina.bo.Links;
 import com.mina.bo.Manga;
 import com.mina.util.HibernateUtil;
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -49,10 +50,6 @@ public class MangaCrawler {
     private static String ROOT_DIR = "";
     private static int TPS = 100;
 
-    static {
-
-    }
-
     /**
      * @param args the command line arguments
      */
@@ -73,12 +70,12 @@ public class MangaCrawler {
         }
 
         MangaCrawler articles_crawler = new MangaCrawler();
-        articles_crawler.doUpdateChapterContent();
+        articles_crawler.doUpdateImages();
 //        articles_crawler.DownloadImage("https://s51.mkklcdnv6tempv2.com/mangakakalot/y2/yume_maboroshi_no_gotoku/chapter_58_single_combat/19.jpg", "C:\\running_projects\\manga\\out\\test333.jpg");
 
     }
 
-    ExecutorService executors = Executors.newFixedThreadPool(10);
+    ExecutorService executors = Executors.newFixedThreadPool(100);
     ExecutorService executorsDownload = Executors.newFixedThreadPool(10);
 
     public static Object _lock = new Object();
@@ -89,7 +86,7 @@ public class MangaCrawler {
     public static int DOWNLOADED = 0;
     public static int DOWNLOADING = 0;
 
-    private void doCrawler() {
+    private void doCrawlerFull() {
         Session session = null;
         Transaction tx = null;
         try {
@@ -106,7 +103,7 @@ public class MangaCrawler {
                 query = session.createQuery("from Links where link not like '%chapter%' and Status is null order by id");
                 List<Links> lstLinkManga = query.setFirstResult(k * TPS).setMaxResults(k * TPS + TPS).list();
                 for (int i = 0; i < lstLinkManga.size(); i++) {
-                    executors.submit(new Worker(lstLinkManga.get(i)));
+                    executors.submit(new WorkerCrawlFull(lstLinkManga.get(i)));
                     lstLinkManga.get(i).setStatus(1);
                     session.saveOrUpdate(lstLinkManga.get(i));
                     session.flush();
@@ -181,11 +178,65 @@ public class MangaCrawler {
 
     }
 
-    private class Worker implements Runnable {
+    private void doUpdateImages() {
+        Session session = null;
+        Transaction tx = null;
+        try {
+            session = HibernateUtil.openSession();
+
+            Query query = session.createQuery("select count(*) from Files where Status is null");
+            Long count = (Long) query.uniqueResult();
+
+            logger.info("=================TOTAL LINKS:" + count + ".Total paging:" + (count / TPS + 1));
+            int pageCount = (int) (count / TPS + 1);
+            for (int k = 0; k < pageCount; k++) {
+                try {
+
+                    tx = session.beginTransaction();
+                    query = session.createQuery("from Files where Status is null");
+                    List<Files> lstFiles = query.setMaxResults(TPS).list();
+                    for (int i = 0; i < lstFiles.size(); i++) {
+                        try {
+                            executors.submit(new WorkerUpdateImages(lstFiles.get(i)));
+                            lstFiles.get(i).setStatus(1);
+                            session.saveOrUpdate(lstFiles.get(i));
+                            session.flush();
+                            logger.info("==========Downloading:" + (++DOWNLOADING) + "/" + count + ".Downloaded:" + DOWNLOADED);
+                        } catch (Exception e) {
+                            logger.error(e);
+                        }
+                    }
+                    tx.commit();
+                    while (true) {
+                        if (DOWNLOADING - DOWNLOADED >= 2 * TPS) {
+                            logger.info("DOWNLOADING:" + DOWNLOADING + "-DOWNLOADED:" + DOWNLOADED);
+                            logger.info("WAITTTTTTTTTTTTTTTTTTTTTTTTTTTTTT>>>>>>>>>>>>>>>>>>");
+                            Thread.sleep(1000);
+                        } else {
+                            break;
+                        }
+                    }
+                } catch (Exception e) {
+                    logger.error(e);
+                }
+            }
+
+        } catch (Exception ex) {
+            logger.error(ex);
+
+        } finally {
+            if (session != null) {
+                session.close();
+            }
+        }
+
+    }
+
+    private class WorkerCrawlFull implements Runnable {
 
         private Links linkManga;
 
-        public Worker(Links linkManga) {
+        public WorkerCrawlFull(Links linkManga) {
             this.linkManga = linkManga;
         }
 
@@ -439,12 +490,12 @@ public class MangaCrawler {
         }
     }
 
-    private class DownloadImageWorder implements Runnable {
+    private class DownloadImageWorker implements Runnable {
 
         private String imageUrl;
         private String path;
 
-        public DownloadImageWorder(String imageUrl, String path) {
+        public DownloadImageWorker(String imageUrl, String path) {
             this.imageUrl = imageUrl;
             this.path = path;
         }
@@ -504,10 +555,10 @@ public class MangaCrawler {
                 outputStream.write(buffer, 0, length);
             }
             logger.info("Download success image:" + imageUrl);
-            synchronized (_lock) {
-                DOWNLOADED_IMAGES++;
-            }
-            logger.info("Downloaded image: " + DOWNLOADED_IMAGES + "/" + TOTAL_IMAGES);
+//            synchronized (_lock) {
+//                DOWNLOADED_IMAGES++;
+//            }
+            //logger.info("Downloaded image: " + DOWNLOADED_IMAGES + "/" + TOTAL_IMAGES);
 
             return true;
         } catch (Exception ex) {
@@ -604,6 +655,66 @@ public class MangaCrawler {
                 if (session != null) {
                     session.close();
                 }
+                synchronized (_lock) {
+                    DOWNLOADED++;
+                }
+            }
+        }
+    }
+
+    private class WorkerUpdateImages implements Runnable {
+
+        private Files file;
+
+        public WorkerUpdateImages(Files file) {
+            this.file = file;
+        }
+
+        @Override
+        public void run() {
+            Session session = null;
+            Transaction tx = null;
+            try {
+                session = HibernateUtil.openSession();
+                tx = session.beginTransaction();
+                int retry = 0;
+                String relationPath = file.getManga_id() % 100 + File.separator
+                        + file.getManga_id() + File.separator + file.getChapterSlug();
+                String folder = ROOT_DIR + File.separator + relationPath;
+                if (!new File(folder).exists()) {
+                    new File(folder).mkdirs();
+                }
+                String fileName = getFileNameFromUrlPath(file.getSrcUrl());
+                String fullPath = folder + File.separator + fileName;
+                while (!DownloadImage(file.getSrcUrl(), fullPath) && retry < 3) {
+                    retry++;
+                    try {
+                        Thread.sleep(1000);
+                    } catch (Exception ex) {
+                        logger.error(ex);
+                    }
+                }
+
+                file.setStatus(2);
+                file.setLocalUrl("https://cdn2.mangagru.com/files/" + relationPath + "/" + fileName);
+                logger.info("Files:" + file.getSrcUrl() + " saved");
+
+            } catch (Exception ex) {
+                logger.error("Error for Chapter link:" + file.getSrcUrl());
+                logger.error(ex);
+                file.setStatus(3);
+            } finally {
+                try {
+                    session.saveOrUpdate(file);
+                    tx.commit();
+                } catch (Exception e) {
+                    logger.error(e);
+                }finally {
+                    if (session != null) {
+                        session.close();
+                    }
+                }
+
                 synchronized (_lock) {
                     DOWNLOADED++;
                 }
